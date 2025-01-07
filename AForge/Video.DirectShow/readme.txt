@@ -1,0 +1,2 @@
+this project came from https://github.com/PatBQc/SeriousWebcamSettings but they got it from here https://github.com/jkuusama/LitePlacer-retired-experiment/tree/master/AForge/Video.DirectShow
+so i honestly dont have a clue where it first came from
