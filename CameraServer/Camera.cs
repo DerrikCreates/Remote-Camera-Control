@@ -11,6 +11,79 @@ namespace CameraServer
         [JsonIgnore]
         public VideoCaptureDevice CaptureDevice { get; protected set; }
 
+        public static SetCameraMessage GetCameraSettings(Camera cam)
+        {
+            var msg = new SetCameraMessage();
+	    msg.Name = cam.Name;
+            for (int i = 0; i < cam.Settings.Count; i++)
+            {
+                var setting = cam.Settings[i];
+
+                // we are a cam prop
+
+                switch (setting.CamProperty)
+                {
+                    case CameraControlProperty.Pan:
+                        continue;
+                    case CameraControlProperty.Tilt:
+                        continue;
+                    case CameraControlProperty.Roll:
+                        continue;
+                    case CameraControlProperty.Zoom:
+                        continue;
+                    case CameraControlProperty.Exposure:
+                        msg.Exposure = setting.Value;
+                        continue;
+                    case CameraControlProperty.Iris:
+                        continue;
+                    case CameraControlProperty.Focus:
+                        msg.Focus = setting.Value;
+                        continue;
+                }
+
+                switch (setting.VideoProperty)
+                {
+                    case VideoProcAmpProperty.Brightness:
+                        msg.Brightness = setting.Value;
+                        continue;
+                    case VideoProcAmpProperty.Contrast:
+                        msg.Contrast = setting.Value;
+                        continue;
+                    case VideoProcAmpProperty.Hue:
+                        continue;
+                    case VideoProcAmpProperty.Saturation:
+                        msg.Satuation = setting.Value;
+                        continue;
+                    case VideoProcAmpProperty.Sharpness:
+                        msg.Sharpness = setting.Value;
+                        continue;
+                    case VideoProcAmpProperty.Gamma:
+                        continue;
+                    case VideoProcAmpProperty.ColorEnable:
+                        continue;
+                    case VideoProcAmpProperty.WhiteBalance:
+                        msg.WhiteBalance = setting.Value;
+                        continue;
+                    case VideoProcAmpProperty.BacklightCompensation:
+                        msg.BacklightComp = setting.Value;
+                        continue;
+                    case VideoProcAmpProperty.Gain:
+                        msg.Gain = setting.Value;
+                        continue;
+                }
+            }
+
+            return msg;
+        }
+
+        // TODO: Add refreshing a cameras settings
+        [Obsolete]
+        public static void RefreshCameraSettings(Camera cam)
+        {
+            throw new NotImplementedException();
+        }
+
+        // TODO: Return true if success, false if one of the camera Set calls failed (returned false)
         public static void ApplyMesage(Camera cam, SetCameraMessage msg)
         {
             if (msg.Focus is not null)
