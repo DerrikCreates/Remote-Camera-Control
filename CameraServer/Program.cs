@@ -22,6 +22,7 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.PropertyNameCaseInsensitive = true;
 });
 
+Camera.LogCameraNames();
 var app = builder.Build();
 
 // TODO: add serilog with the compact json logger.
@@ -93,9 +94,12 @@ app.MapGet(
 
             return Results.BadRequest("cameraName not provided");
         }
-	
-        var camera = Camera.GetCameras().FirstOrDefault(c => string.Equals(cameraName, c.Name,StringComparison.CurrentCultureIgnoreCase));
-	
+
+        var camera = Camera
+            .GetCameras()
+            .FirstOrDefault(c =>
+                string.Equals(cameraName, c.Name, StringComparison.CurrentCultureIgnoreCase)
+            );
 
         if (camera is null)
         {
@@ -109,10 +113,9 @@ app.MapGet(
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             PropertyNameCaseInsensitive = true,
             NumberHandling = JsonNumberHandling.AllowReadingFromString,
-
         };
 
-      //  var json = JsonSerializer.Serialize(settings, jsonOptions);
+        //  var json = JsonSerializer.Serialize(settings, jsonOptions);
         Console.WriteLine($"/GetCamera/{cameraName} found settings");
 
         return Results.Json(settings, statusCode: StatusCodes.Status200OK);

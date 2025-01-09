@@ -14,7 +14,7 @@ namespace CameraServer
         public static SetCameraMessage GetCameraSettings(Camera cam)
         {
             var msg = new SetCameraMessage();
-	    msg.Name = cam.Name;
+            msg.Name = cam.Name;
             for (int i = 0; i < cam.Settings.Count; i++)
             {
                 var setting = cam.Settings[i];
@@ -45,6 +45,7 @@ namespace CameraServer
                 {
                     case VideoProcAmpProperty.Brightness:
                         msg.Brightness = setting.Value;
+
                         continue;
                     case VideoProcAmpProperty.Contrast:
                         msg.Contrast = setting.Value;
@@ -449,6 +450,16 @@ namespace CameraServer
             }
 
             return cameras;
+        }
+
+        public static void LogCameraNames()
+        {
+            FilterInfoCollection collection = new(FilterCategory.VideoInputDevice);
+
+            foreach (FilterInfo item in collection)
+            {
+                Console.WriteLine($"Camera:{item.Name}{Environment.NewLine}{item.MonikerString}{Environment.NewLine}");
+            }
         }
 
         public static List<(VideoCaptureDevice device, string name)> GetVideoDevices()
