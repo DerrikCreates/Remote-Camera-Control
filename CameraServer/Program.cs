@@ -11,7 +11,8 @@ using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder();
-builder.WebHost.UseUrls("http://localhost:5555");
+// TODO: add option to choose what interface and port to listen on
+builder.WebHost.UseUrls("http://0.0.0.0:5555");
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
