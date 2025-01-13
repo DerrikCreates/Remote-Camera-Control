@@ -3,16 +3,23 @@ using System.Text.Json.Serialization;
 using System.Xml;
 using AForge.Video.DirectShow;
 using CameraServer;
+using CameraServer.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder();
+
+// TODO: add some options to whitelist camera names, making it impossible for webrequests to effect certian camera settings
+IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("settings.json").Build();
+
 // TODO: add option to choose what interface and port to listen on
-builder.WebHost.UseUrls("http://0.0.0.0:5555");
+builder.WebHost.UseUrls(configuration["url"]);
+
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -25,6 +32,12 @@ builder.Services.Configure<JsonOptions>(options =>
 
 Camera.LogCameraNames();
 var app = builder.Build();
+
+if (!Directory.Exists(configuration["presetPath"]))
+{
+    Directory.CreateDirectory("./presets/");
+}
+string _presetPath = new FileInfo("./presets/").FullName;
 
 // TODO: add serilog with the compact json logger.
 app.MapPost(
@@ -120,6 +133,80 @@ app.MapGet(
         Console.WriteLine($"/GetCamera/{cameraName} found settings");
 
         return Results.Json(settings, statusCode: StatusCodes.Status200OK);
+    }
+);
+string PresetFileNameBuilder(string cameraName, string presetName)
+{
+    cameraName = cameraName.Replace(' ', '_');
+    return $"{cameraName}_{presetName.GetFileSafeString()}.json";
+}
+app.MapGet(
+    "/LoadPreset",
+    async (string cameraName, string presetName) =>
+    {
+        if (string.IsNullOrWhiteSpace(presetName))
+        {
+            return Results.BadRequest("preset name is invalid");
+        }
+
+        var camera = Camera.GetCameraByName(cameraName);
+        if (camera is null)
+        {
+            return Results.BadRequest($"could not find camera with name:{cameraName}");
+        }
+
+        var path = Path.Combine(_presetPath, PresetFileNameBuilder(cameraName, presetName));
+        if (!File.Exists(path))
+        {
+            return Results.BadRequest(
+                $"Could not find preset named {presetName} for camera {cameraName}"
+            );
+        }
+
+        var json = File.ReadAllText(path);
+        try
+        {
+            var settings = JsonSerializer.Deserialize<SetCameraMessage>(json);
+            if (settings is null)
+            {
+                return Results.BadRequest(
+                    $"Failed to load the saved preset for camera: {cameraName}, preset:{presetName}"
+                );
+            }
+            Console.WriteLine($"Applying preset: {presetName} to camera:{cameraName}");
+            Camera.ApplyMesage(camera, settings);
+        }
+        catch (System.Exception)
+        {
+            return Results.BadRequest(
+                $"Failed to load the saved preset for camera: {cameraName}, preset:{presetName}"
+            );
+        }
+    }
+);
+app.MapGet(
+    "/SavePreset",
+    async (string cameraName, string presetName) =>
+    {
+        if (string.IsNullOrWhiteSpace(presetName))
+        {
+            return Results.BadRequest("preset name is invalid");
+        }
+
+        var camera = Camera.GetCameraByName(cameraName);
+        if (camera is null)
+        {
+            return Results.BadRequest($"could not find camera with name:{cameraName}");
+        }
+
+        var settings = Camera.GetCameraSettings(camera);
+
+        var json = JsonSerializer.Serialize(settings);
+
+        var path = Path.Combine(_presetPath, PresetFileNameBuilder(cameraName, presetName));
+        Console.WriteLine($"saving to {path}");
+        await File.WriteAllTextAsync(path, json);
+        return Results.Ok();
     }
 );
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Serialization;
 using AForge.Video.DirectShow;
 
@@ -10,6 +11,15 @@ namespace CameraServer
 
         [JsonIgnore]
         public VideoCaptureDevice CaptureDevice { get; protected set; }
+
+        public static Camera? GetCameraByName(string name)
+        {
+            return Camera
+                .GetCameras()
+                .FirstOrDefault(c =>
+                    string.Equals(c.Name, name, StringComparison.CurrentCultureIgnoreCase)
+                );
+        }
 
         public static SetCameraMessage GetCameraSettings(Camera cam)
         {
@@ -458,7 +468,9 @@ namespace CameraServer
 
             foreach (FilterInfo item in collection)
             {
-                Console.WriteLine($"Camera:{item.Name}{Environment.NewLine}{item.MonikerString}{Environment.NewLine}");
+                Console.WriteLine(
+                    $"Camera:{item.Name}{Environment.NewLine}{item.MonikerString}{Environment.NewLine}"
+                );
             }
         }
 
